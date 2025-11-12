@@ -1,6 +1,8 @@
 ﻿streamlit
+fpdf
 matplotlib
 numpy
 librosa
 yt-dlp
 pydub
+mido
