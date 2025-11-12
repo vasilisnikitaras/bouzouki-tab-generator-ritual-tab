@@ -1,0 +1,6 @@
+﻿streamlit
+matplotlib
+numpy
+librosa
+yt-dlp
+pydub
