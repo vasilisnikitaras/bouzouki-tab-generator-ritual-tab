@@ -12,6 +12,19 @@ from datetime import datetime
 import librosa.display
 tab = []
 
+
+st.markdown("""
+    <style>
+    .note-label {
+        font-size: 20px;
+        font-weight: bold;
+        color: #ff4b4b;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+
+
 st.set_page_config(page_title="Τελετουργική Ταμπλατούρα", page_icon="🎼")
 st.title("🎼 Τελετουργική Ταμπλατούρα για Τετράχορδο Μπουζούκι")
 st.markdown("Καλώς ήρθες στην τελετουργική εφαρμογή για μετατροπή νοτών, συχνοτήτων και τραγουδιών σε ταμπλατούρα για τετράχορδο μπουζούκι.")
