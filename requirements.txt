@@ -1,8 +1,8 @@
-﻿streamlit
-fpdf
+streamlit
 matplotlib
 numpy
-librosa
 yt-dlp
-pydub
+librosa
+soundfile
+fpdf
 mido
