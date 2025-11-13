@@ -157,7 +157,7 @@ elif input_type == "Συχνότητα":
     freq_input = st.number_input("📡 Εισάγετε συχνότητα (Hz):", min_value=20.0, max_value=2000.0)
     if freq_input:
         midi = freq_to_midi(freq_input)
-       # st.write(f"🎼 {midi_to_note(midi)}") 
+# st.write(f"🎼 {midi_to_note(midi)}")  # Το αφαιρούμε γιατί εμφανίζεται διπλά
         plot_positions(midi)
         note = midi_to_note(midi).split()[0]
         tab = tab_from_notes([(note, 1)])
