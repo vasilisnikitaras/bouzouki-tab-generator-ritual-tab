@@ -190,3 +190,20 @@ def extract_notes_from_audio(file_path):
             notes.append(note)
     return notes[:20]
 
+
+# 🎚️ Επιλογή εισόδου
+input_type = st.radio("📥 Επιλέξτε είδος εισόδου:", ["Νότα", "Συχνότητα"])
+
+if input_type == "Νότα":
+    note_input = st.text_input("🎵 Εισάγετε νότα (π.χ. A4):")
+    if note_input:
+        midi = note_to_midi(note_input)
+        st.write(f"MIDI: {midi}")
+        st.write(f"Νότα: {midi_to_note(midi)}")
+
+elif input_type == "Συχνότητα":
+    freq_input = st.number_input("📡 Εισάγετε συχνότητα (Hz):", min_value=20.0, max_value=2000.0)
+    if freq_input:
+        midi = freq_to_midi(freq_input)
+        st.write(f"MIDI: {midi}")
+        st.write(f"Νότα: {midi_to_note(midi)}")
