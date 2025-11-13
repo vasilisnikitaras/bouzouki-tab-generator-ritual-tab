@@ -10,6 +10,7 @@ from fpdf import FPDF
 from mido import Message, MidiFile, MidiTrack
 from datetime import datetime
 import librosa.display
+tab = []
 
 st.set_page_config(page_title="Τελετουργική Ταμπλατούρα", page_icon="🎼")
 st.title("🎼 Τελετουργική Ταμπλατούρα για Τετράχορδο Μπουζούκι")
@@ -101,7 +102,7 @@ def plot_spectrum(file_path):
 def download_youtube_audio(url):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': 'audio.%(ext)s)',
+        'outtmpl': 'audio.%(ext)s',
         'ffmpeg_location': r'C:\Users\Admin\Downloads\ffmpeg\bin',
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'wav', 'preferredquality': '192'}],
         'quiet': True
@@ -122,17 +123,20 @@ def extract_notes_from_audio(file_path):
             notes.append(note)
     return notes[:20]
 
-
 # 🎚️ Επιλογή είδους εισόδου
-input_type = st.radio("📥 Επιλέξτε είδος εισόδου:", ["Νότα", "Συχνότητα", "Αρχείο Ήχου", "YouTube"])
+input_type = st.radio("📥 Επιλέξτε είδος εισόδου:", ["Νότα", "Συχνότητα", "Αρχείο Ήχου", "YouTube", "Αρχείο TXT"])
 
 if input_type == "Νότα":
     note_input = st.text_input("🎵 Εισάγετε νότα (π.χ. G#4):")
     if note_input:
         try:
             midi = note_to_midi(note_input)
-            st.write(f"🎼 {midi_to_note(midi)}")
+            st.write(f"🎼 {midi_to_note(midi)} / MIDI:{midi} / {midi_to_freq(midi)}Hz")
             plot_positions(midi)
+            tab = tab_from_notes([(note_input, 1)])
+            st.subheader("📜 Ταμπλατούρα")
+            for t in tab:
+                st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
         except Exception as e:
             st.error(f"⚠️ Σφάλμα: {e}")
 
@@ -142,6 +146,11 @@ elif input_type == "Συχνότητα":
         midi = freq_to_midi(freq_input)
         st.write(f"🎼 {midi_to_note(midi)}")
         plot_positions(midi)
+        note = midi_to_note(midi).split()[0]
+        tab = tab_from_notes([(note, 1)])
+        st.subheader("📜 Ταμπλατούρα")
+        for t in tab:
+            st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
 
 elif input_type == "Αρχείο Ήχου":
     uploaded_file = st.file_uploader("🎙️ Ανεβάστε αρχείο .wav", type=["wav"])
@@ -168,6 +177,7 @@ elif input_type == "YouTube":
         for t in tab:
             st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
         plot_positions(note_to_midi(notes[0]))
+
 elif input_type == "Αρχείο TXT":
     uploaded_txt = st.file_uploader("📄 Ανέβασε αρχείο .txt με νότες και διάρκειες", type=["txt"])
     if uploaded_txt:
@@ -185,9 +195,6 @@ elif input_type == "Αρχείο TXT":
             st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
         plot_positions(note_to_midi(note_list[0][0]))
 
-
-
-
 st.subheader("🌞 Δημιούργησε μουσική με Suno")
 suno_prompt = st.text_area("📝 Γράψε το τελετουργικό σου prompt (π.χ. Ρεμπέτικο για το φως και τη μνήμη):")
 
@@ -195,10 +202,9 @@ if st.button("🎶 Δημιουργία με Suno"):
     st.info("🔗 Πήγαινε στο https://suno.com και επικόλλησε το παρακάτω prompt:")
     st.code(suno_prompt, language="markdown")
 
-
 # 📄 Εξαγωγή PDF
 if st.button("📄 Εξαγωγή PDF Ταμπλατούρας"):
-    if 'tab' in locals() and tab:
+    if tab:
         pdf_path = generate_pdf(tab)
         st.success("✅ Το PDF δημιουργήθηκε.")
         with open(pdf_path, "rb") as f:
@@ -208,10 +214,11 @@ if st.button("📄 Εξαγωγή PDF Ταμπλατούρας"):
 
 # 🎼 Εξαγωγή MIDI
 if st.button("🎼 Εξαγωγή MIDI"):
-    if 'tab' in locals() and tab:
+    if tab:
         midi_path = export_midi(tab)
         st.success("✅ Το MIDI δημιουργήθηκε.")
         with open(midi_path, "rb") as f:
             st.download_button("📥 Κατέβασε το MIDI", f, file_name="output.mid")
     else:
         st.error("⚠️ Δεν υπάρχει διαθέσιμη ταμπλατούρα για εξαγωγή.")
+
