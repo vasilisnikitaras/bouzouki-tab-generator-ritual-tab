@@ -169,6 +169,14 @@ elif input_type == "YouTube":
             st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
         plot_positions(note_to_midi(notes[0]))
 
+st.subheader("🌞 Δημιούργησε μουσική με Suno")
+suno_prompt = st.text_area("📝 Γράψε το τελετουργικό σου prompt (π.χ. Ρεμπέτικο για το φως και τη μνήμη):")
+
+if st.button("🎶 Δημιουργία με Suno"):
+    st.info("🔗 Πήγαινε στο https://suno.com και επικόλλησε το παρακάτω prompt:")
+    st.code(suno_prompt, language="markdown")
+
+
 # 📄 Εξαγωγή PDF
 if st.button("📄 Εξαγωγή PDF Ταμπλατούρας"):
     if 'tab' in locals() and tab:
