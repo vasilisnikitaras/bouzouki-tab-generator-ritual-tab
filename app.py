@@ -168,6 +168,25 @@ elif input_type == "YouTube":
         for t in tab:
             st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
         plot_positions(note_to_midi(notes[0]))
+elif input_type == "Αρχείο TXT":
+    uploaded_txt = st.file_uploader("📄 Ανέβασε αρχείο .txt με νότες και διάρκειες", type=["txt"])
+    if uploaded_txt:
+        content = uploaded_txt.read().decode("utf-8")
+        lines = content.strip().split("\n")
+        note_list = []
+        for line in lines:
+            parts = line.strip().split(",")
+            if len(parts) == 2:
+                note, dur = parts[0].strip(), float(parts[1].strip())
+                note_list.append((note, dur))
+        tab = tab_from_notes(note_list)
+        st.subheader("📜 Ταμπλατούρα από TXT")
+        for t in tab:
+            st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
+        plot_positions(note_to_midi(note_list[0][0]))
+
+
+
 
 st.subheader("🌞 Δημιούργησε μουσική με Suno")
 suno_prompt = st.text_area("📝 Γράψε το τελετουργικό σου prompt (π.χ. Ρεμπέτικο για το φως και τη μνήμη):")
