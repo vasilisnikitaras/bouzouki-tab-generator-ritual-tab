@@ -115,13 +115,12 @@ def generate_pdf(tab):
     pdf.output("tab.pdf")
     return "tab.pdf"
 
-        # 🎹 Εξαγωγή MIDI αρχείου από την ταμπλατούρα
+# 🎹 Εξαγωγή MIDI αρχείου από την ταμπλατούρα
 def export_midi(tab, filename="output.mid"):
     mid = MidiFile()
     track = MidiTrack()
     mid.tracks.append(track)
-    time_unit = 480  # μονάδα χρόνου για διάρκεια
-
+    time_unit = 480
     for t in tab:
         try:
             midi = note_to_midi(t['Νότα'])
@@ -130,7 +129,6 @@ def export_midi(tab, filename="output.mid"):
             track.append(Message('note_off', note=midi, velocity=64, time=duration))
         except:
             continue
-
     mid.save(filename)
     return filename
 
@@ -150,7 +148,7 @@ def download_youtube_audio(url):
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': 'audio.%(ext)s',
-        'ffmpeg_location': r'C:\Users\Admin\Downloads\ffmpeg-2025-11-10-git-133a0bcb13-full_build\ffmpeg-2025-11-10-git-133a0bcb13-full_build\bin',
+        'ffmpeg_location': r'C:\Users\Admin\Downloads\ffmpeg\bin',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'wav',
@@ -168,129 +166,19 @@ def extract_notes_from_audio(file_path):
     pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
     notes = []
     for i in range(pitches.shape[1]):
+            note = librosa.hz_to_note(pitch)
+            notes.append(note)
+    return notes[:20]
+
+def extract_notes_from_audio(file_path):
+    y, sr = librosa.load(file_path)
+    pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
+    notes = []
+    for i in range(pitches.shape[1]):
         index = magnitudes[:, i].argmax()
         pitch = pitches[index, i]
         if pitch > 0:
             note = librosa.hz_to_note(pitch)
             notes.append(note)
     return notes[:20]
-
-# 🎛️ Streamlit UI – επιλογή εισόδου
-st.title("🎼 Τελετουργική Ταμπλατούρα για Τετράχορδο Μπουζούκι")
-
-input_type = st.radio("Είσοδος:", ["Νότα", "Συχνότητα"])
-if input_type == "Νότα":
-    note = st.text_input("Δώσε νότα (π.χ. G#4):")
-    if note:
-        try:
-            midi = note_to_midi(note)
-            st.write(f"Συχνότητα: {midi_to_freq(midi)} Hz")
-            st.write("Θέσεις:")
-            for s, f in find_positions(midi):
-                st.write(f"→ Χορδή: {s}, Τάστο: {f}")
-            plot_positions(midi)
-        except ValueError as e:
-            st.error(str(e))
-elif input_type == "Συχνότητα":
-    freq = st.number_input("Δώσε συχνότητα (Hz):", min_value=50.0, max_value=2000.0)
-    if freq:
-        midi = freq_to_midi(freq)
-        note = midi_to_note(midi)
-        st.write(f"Νότα: {note}")
-        st.write("Θέσεις:")
-        for s, f in find_positions(midi):
-            st.write(f"→ Χορδή: {s}, Τάστο: {f}")
-        plot_positions(midi)
-
-# 🎵 Εισαγωγή λίστας νοτών με διάρκεια
-st.subheader("🎵 Ταμπλατούρα με διάρκεια")
-note_input = st.text_area("Λίστα νοτών με διάρκεια (π.χ. D4,0.5; F#4,1.0; A4,0.25)")
-tab = []
-if note_input:
-    try:
-        entries = [tuple(x.strip().split(',')) for x in note_input.split(';')]
-        parsed = [(n.strip(), float(d)) for n, d in entries]
-        tab = tab_from_notes(parsed)
-        for t in tab:
-            st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
-    except Exception as e:
-        st.error(f"Σφάλμα στην είσοδο: {e}")
-
-# 📤 Κουμπιά εξαγωγής PDF και MIDI
-if tab:
-    if st.button("📄 Δημιουργία PDF"):
-        pdf_path = generate_pdf(tab)
-        with open(pdf_path, "rb") as f:
-            st.download_button("⬇️ Κατέβασε την Ταμπλατούρα", f, file_name="tab.pdf")
-
-    if st.button("🎹 Εξαγωγή MIDI"):
-        midi_path = export_midi(tab)
-        with open(midi_path, "rb") as f:
-            st.download_button("⬇️ Κατέβασε MIDI", f, file_name="tab.mid")
-
-
-# 🔮 AI πρόταση για ελάχιστη μετακίνηση στα τάστα
-st.subheader("🔮 AI πρόταση για ελάχιστη μετακίνηση")
-if tab:
-    last_fret = None
-    for t in tab:
-        if t['Τάστο'] != '—':
-            if last_fret is not None and abs(t['Τάστο'] - last_fret) > 5:
-                st.write(f"👉 Εναλλακτική: Παίξε {t['Νότα']} σε άλλη χορδή για λιγότερη μετακίνηση.")
-            last_fret = t['Τάστο']
-
-# 🎧 Είσοδος από YouTube ή Suno
-st.subheader("🎧 Είσοδος από YouTube ή Suno")
-source = st.radio("Επέλεξε πηγή:", ["YouTube link", "Αρχείο Suno (.wav/.mp3)"])
-
-# 📥 Ανάλυση από YouTube
-if source == "YouTube link":
-    url = st.text_input("🔗 Δώσε σύνδεσμο YouTube")
-    if st.button("🎼 Ανάλυση YouTube"):
-        try:
-            audio_file = download_youtube_audio(url)
-            st.audio(audio_file, format='audio/wav')
-            notes = extract_notes_from_audio(audio_file)
-            st.write("🎵 Εξαγόμενες νότες:", notes)
-            tab = tab_from_notes([(n, 1.0) for n in notes])
-            for t in tab:
-                st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
-            if st.button("📄 Δημιουργία PDF από YouTube"):
-                pdf_path = generate_pdf(tab)
-                with open(pdf_path, "rb") as f:
-                    st.download_button("⬇️ Κατέβασε PDF", f, file_name="tab_youtube.pdf")
-            if st.button("📈 Δείξε Φασματική Ανάλυση"):
-                plot_spectrum(audio_file)
-            if st.button("🎹 Τελική Εξαγωγή MIDI"):
-                midi_path = export_midi(tab)
-                with open(midi_path, "rb") as f:
-                    st.download_button("⬇️ Κατέβασε Τελικό MIDI", f, file_name="tab_final.mid")
-        except Exception as e:
-            st.error(f"Σφάλμα ανάλυσης YouTube: {e}")
-
-# 📥 Ανάλυση από αρχείο Suno
-elif source == "Αρχείο Suno (.wav/.mp3)":
-    uploaded_file = st.file_uploader("🎵 Ανέβασε αρχείο ήχου", type=["wav", "mp3"])
-    if uploaded_file and st.button("🎼 Ανάλυση Suno"):
-        try:
-            with open("uploaded.wav", "wb") as f:
-                f.write(uploaded_file.read())
-            st.audio("uploaded.wav", format='audio/wav')
-            notes = extract_notes_from_audio("uploaded.wav")
-            st.write("🎵 Εξαγόμενες νότες:", notes)
-            tab = tab_from_notes([(n, 1.0) for n in notes])
-            for t in tab:
-                st.write(f"{t['Νότα']} → Χορδή: {t['Χορδή']}, Τάστο: {t['Τάστο']}, Διάρκεια: {t['Διάρκεια']}")
-            if st.button("📄 Δημιουργία PDF από Suno"):
-                pdf_path = generate_pdf(tab)
-                with open(pdf_path, "rb") as f:
-                    st.download_button("⬇️ Κατέβασε PDF", f, file_name="tab_suno.pdf")
-            if st.button("📈 Δείξε Φασματική Ανάλυση"):
-                plot_spectrum("uploaded.wav")
-            if st.button("🎹 Τελική Εξαγωγή MIDI"):
-                midi_path = export_midi(tab)
-                with open(midi_path, "rb") as f:
-                    st.download_button("⬇️ Κατέβασε Τελικό MIDI", f, file_name="tab_final.mid")
-        except Exception as e:
-            st.error(f"Σφάλμα ανάλυσης Suno: {e}")
 
